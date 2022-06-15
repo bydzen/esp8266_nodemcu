@@ -1,14 +1,17 @@
-// Template ID, Device Name and Auth Token are provided by the Blynk.Cloud
-// See the Device Info tab, or Template settings
+// Blynk config authentication
 #define BLYNK_TEMPLATE_ID "XXXXX"
 #define BLYNK_DEVICE_NAME "XXXXX"
 #define BLYNK_AUTH_TOKEN "XXXXX"
 
 // FirebaseESP8266.h must be included before ESP8266WiFi.h
-#include "FirebaseESP8266.h" // Install Firebase ESP8266 library
+// Install Firebase ESP8266 library
+#include "FirebaseESP8266.h"
 
-#define FIREBASE_HOST "XXXXX" // Without http:// or https:// schemes
+// Firebase host and auth without http:// or https:// schemes
+#define FIREBASE_HOST "XXXXX"
 #define FIREBASE_AUTH "XXXXX"
+
+// Wi-Fi Config
 #define WIFI_SSID "XXXXX"
 #define WIFI_PASSWORD "XXXXX"
 
@@ -51,10 +54,7 @@ BlynkTimer timer;
 // This function is called every time the device is connected to the Blynk.Cloud
 BLYNK_CONNECTED()
 {
-  // Change Web Link Button message to "Congratulations!"
-  Blynk.setProperty(V3, "offImageUrl", "https://static-image.nyc3.cdn.digitaloceanspaces.com/general/fte/congratulations.png");
-  Blynk.setProperty(V3, "onImageUrl", "https://static-image.nyc3.cdn.digitaloceanspaces.com/general/fte/congratulations_pressed.png");
-  Blynk.setProperty(V3, "url", "https://docs.blynk.io/en/getting-started/what-do-i-need-to-blynk/how-quickstart-device-was-made");
+  Serial.printf("\nBlynk Connected Successfully!\n");
 }
 
 // This function sends Arduino's uptime every second to Virtual Pin 2.
@@ -65,29 +65,39 @@ void myTimerEvent()
   Blynk.virtualWrite(V2, millis() / 1000);
 
   //Uptime seconds
-  int uptimeSeconds = millis() / 1000;
+  int uptimeInSeconds = millis() / 1000;
+
+  // Uptime conversion from second to minutes
+  float uptimeInMinutes = (millis() / 1000) / 60;
 
   // Uptime conversion from second to hour
-  float uptimeHours = ((millis() / 1000) / 60) / 60;
+  float uptimeInHours = ((millis() / 1000) / 60) / 60;
 
-  if (Firebase.setFloat(firebaseData, "/FirebaseIOT/uptimeSeconds", uptimeSeconds))
+  if (Firebase.setFloat(firebaseData, "/FirebaseIOT/uptimeInSeconds", uptimeInSeconds))
   {
-    Serial.println("+1s");
+    Serial.printf("\n+%ds", 1);
   }
   else
   {
-    Serial.println("FAILED");
-    Serial.println("REASON: " + firebaseData.errorReason());
+    Serial.println("\nERROR (uptimeInSeconds): " + firebaseData.errorReason());
+  }
+
+  if (Firebase.setFloat(firebaseData, "/FirebaseIOT/uptimeInMinutes", uptimeInMinutes))
+  {
+    Serial.printf("\n+%.2fm", 0.02);
+  }
+  else
+  {
+    Serial.println("\nERROR (uptimeInMinutes): " + firebaseData.errorReason());
   }
   
-  if (Firebase.setFloat(firebaseData, "/FirebaseIOT/uptimeHours", uptimeHours))
+  if (Firebase.setFloat(firebaseData, "/FirebaseIOT/uptimeInHours", uptimeInHours))
   {
-    Serial.println("+0.000277778h");
+    Serial.printf("\n+%.4fh\n", 0.0003);
   }
   else
   {
-    Serial.println("FAILED");
-    Serial.println("REASON: " + firebaseData.errorReason());
+    Serial.println("\nERROR (uptimeInHours): " + firebaseData.errorReason());
   }
 }
 
@@ -96,25 +106,16 @@ void setup()
 
   Serial.begin(9600);
 
-  Blynk.begin(auth, ssid, pass);
-
   // Setup a function to be called every second
   timer.setInterval(1000L, myTimerEvent);
 
   dht.begin();
   pinMode(led, OUTPUT);
 
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  Serial.print("Connecting to Wi-Fi");
-  while (WiFi.status() != WL_CONNECTED)
-  {
-    Serial.print(".");
-    delay(250);
-  }
-  Serial.println();
-  Serial.print("Connected with IP: ");
-  Serial.println(WiFi.localIP());
-  Serial.println();
+  // Add the delay for initialize the setup correctly
+  delay(1000);
+  
+  Blynk.begin(auth, ssid, pass);
 
   Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
   Firebase.reconnectWiFi(true);
@@ -136,11 +137,13 @@ void sensorUpdate()
   {
     digitalWrite(led, LOW);
     Blynk.virtualWrite(V1, 1);
+    Firebase.setFloat(firebaseData, "/FirebaseIOT/led", 1);
   }
   else
   {
     digitalWrite(led, HIGH);
     Blynk.virtualWrite(V1, 0);
+    Firebase.setFloat(firebaseData, "/FirebaseIOT/led", 0);
   }
   
   // Read temperature as Fahrenheit (isFahrenheit = true)
@@ -153,48 +156,28 @@ void sensorUpdate()
     return;
   }
 
-  Serial.print(F("Humidity: "));
-  Serial.println(h);
+  // Send data of humidity to Blynk  
   Blynk.virtualWrite(V5, h);
-  Serial.print(F("%  Temperature: "));
-  Serial.println(t);
-  Blynk.virtualWrite(V4, t);
-  Serial.print(F("C  ,"));
-  Serial.println(f);
-  Serial.print(F("F  "));
 
+  // Send data of temperature to Blynk
+  Blynk.virtualWrite(V4, t);
+  
   if (Firebase.setFloat(firebaseData, "/FirebaseIOT/temperature", t))
   {
-    Serial.println("PASSED");
-    Serial.println("PATH: " + firebaseData.dataPath());
-    Serial.println("TYPE: " + firebaseData.dataType());
-    Serial.println("ETag: " + firebaseData.ETag());
-    Serial.println("------------------------------------");
-    Serial.println();
+    Serial.printf("\nTemperature : %.1f°C", t);
   }
   else
   {
-    Serial.println("FAILED");
-    Serial.println("REASON: " + firebaseData.errorReason());
-    Serial.println("------------------------------------");
-    Serial.println();
+    Serial.println("\nERROR (Temperature): " + firebaseData.errorReason());
   }
 
   if (Firebase.setFloat(firebaseData, "/FirebaseIOT/humidity", h))
   {
-    Serial.println("PASSED");
-    Serial.println("PATH: " + firebaseData.dataPath());
-    Serial.println("TYPE: " + firebaseData.dataType());
-    Serial.println("ETag: " + firebaseData.ETag());
-    Serial.println("------------------------------------");
-    Serial.println();
+    Serial.printf("\nHumidity    : %.1f%%", h);
   }
   else
   {
-    Serial.println("FAILED");
-    Serial.println("REASON: " + firebaseData.errorReason());
-    Serial.println("------------------------------------");
-    Serial.println();
+    Serial.println("\nERROR (Humidity): " + firebaseData.errorReason());
   }
 }
 void loop()
@@ -202,10 +185,12 @@ void loop()
   // Run the sensor update function
   sensorUpdate();
 
-  // Run the blynk
+  // Run the Blynk
   Blynk.run();
+  
   // Run the timer for uptime
   timer.run();
 
+  // Add delay 1 second
   delay(1000);
 }
