@@ -204,5 +204,5 @@ void loop()
     //    }
     //  }
 
-    delay(250);
+    delay(1000);
 }
