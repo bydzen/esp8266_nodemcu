@@ -52,11 +52,11 @@ BLYNK_WRITE(V0)
     {
         if (value == 0)
         {
-            digitalWrite(led, LOW);
+            digitalWrite(led, HIGH);
         }
         else
         {
-            digitalWrite(led, HIGH);
+            digitalWrite(led, LOW);
         }
         Serial.println("PASSED");
         Serial.println("PATH: " + firebaseData.dataPath());
@@ -145,8 +145,10 @@ void sensorUpdate()
 
     Serial.print(F("Humidity: "));
     Serial.println(h);
+    Blynk.virtualWrite(V5, h);
     Serial.print(F("%  Temperature: "));
     Serial.println(t);
+    Blynk.virtualWrite(V4, t);
     Serial.print(F("C  ,"));
     Serial.println(f);
     Serial.print(F("F  "));
