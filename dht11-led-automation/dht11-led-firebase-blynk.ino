@@ -51,7 +51,7 @@ char pass[] = WIFI_PASSWORD;
 
 BlynkTimer timer;
 
-int count;
+int count = 0;
 
 // This function is called every time the device is connected to the Blynk.Cloud
 BLYNK_CONNECTED()
