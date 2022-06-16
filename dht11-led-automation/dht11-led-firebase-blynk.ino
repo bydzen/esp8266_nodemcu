@@ -68,12 +68,12 @@ void myTimerEvent()
   int uptimeInSeconds = millis() / 1000;
 
   // Uptime conversion from second to minutes
-  float uptimeInMinutes = (millis() / 1000) / 60;
+  int uptimeInMinutes = (millis() / 1000) / 60;
 
   // Uptime conversion from second to hour
-  float uptimeInHours = ((millis() / 1000) / 60) / 60;
+  int uptimeInHours = ((millis() / 1000) / 60) / 60;
 
-  if (Firebase.setFloat(firebaseData, "/FirebaseIOT/uptimeInSeconds", uptimeInSeconds))
+  if (Firebase.setInt(firebaseData, "/FirebaseIOT/uptimeInSeconds", uptimeInSeconds))
   {
     Serial.printf("\n+%ds", 1);
   }
@@ -82,7 +82,7 @@ void myTimerEvent()
     Serial.println("\nERROR (uptimeInSeconds): " + firebaseData.errorReason());
   }
 
-  if (Firebase.setFloat(firebaseData, "/FirebaseIOT/uptimeInMinutes", uptimeInMinutes))
+  if (Firebase.setInt(firebaseData, "/FirebaseIOT/uptimeInMinutes", uptimeInMinutes))
   {
     Serial.printf("\n+%.2fm", 0.02);
   }
@@ -91,7 +91,7 @@ void myTimerEvent()
     Serial.println("\nERROR (uptimeInMinutes): " + firebaseData.errorReason());
   }
   
-  if (Firebase.setFloat(firebaseData, "/FirebaseIOT/uptimeInHours", uptimeInHours))
+  if (Firebase.setInt(firebaseData, "/FirebaseIOT/uptimeInHours", uptimeInHours))
   {
     Serial.printf("\n+%.4fh\n", 0.0003);
   }
@@ -111,9 +111,6 @@ void setup()
 
   dht.begin();
   pinMode(led, OUTPUT);
-
-  // Add the delay for initialize the setup correctly
-  delay(1000);
   
   Blynk.begin(auth, ssid, pass);
 
@@ -129,21 +126,47 @@ void sensorUpdate()
   // Reading temperature or humidity takes about 1000 milliseconds!
   // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
   float h = dht.readHumidity();
+
+  // Uptime in seconds
+  int everyTenMinutes = millis() / 1000;
+
+  // Save the data to firebase every 10 minutes 
+  if (everyTenMinutes % 600 == 0)
+  {
+    if (Firebase.pushFloat(firebaseData, "/Logs/humidity", h))
+    {}
+    else
+    {
+      Serial.println("\nERROR (Humidity logs): " + firebaseData.errorReason());
+    }
+  }
+  
   // Read temperature as Celsius (the default)
   float t = dht.readTemperature();
+
+  // Save the data to firebase every 10 minutes 
+  if (everyTenMinutes % 600 == 0)
+  {
+    if (Firebase.pushFloat(firebaseData, "/Logs/temperature", t))
+    {}
+    else
+    {
+      Serial.println("\nERROR (Temperature logs): " + firebaseData.errorReason());
+    }
+  }
 
   // Check if the temperature higher than 30°C then turn on the LED
   if (t >= 30)
   {
     digitalWrite(led, LOW);
     Blynk.virtualWrite(V1, 1);
-    Firebase.setFloat(firebaseData, "/FirebaseIOT/led", 1);
+    Firebase.setInt(firebaseData, "/FirebaseIOT/led", 1);
   }
   else
   {
     digitalWrite(led, HIGH);
     Blynk.virtualWrite(V1, 0);
-    Firebase.setFloat(firebaseData, "/FirebaseIOT/led", 0);
+    Firebase.setInt(firebaseData, "/FirebaseIOT/led", 0);
   }
   
   // Read temperature as Fahrenheit (isFahrenheit = true)
@@ -191,6 +214,6 @@ void loop()
   // Run the timer for uptime
   timer.run();
 
-  // Add delay 1 second
-  delay(1000);
+  // Optional delay
+  delay(300);
 }
