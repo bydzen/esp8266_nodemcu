@@ -51,6 +51,8 @@ char pass[] = WIFI_PASSWORD;
 
 BlynkTimer timer;
 
+int count;
+
 // This function is called every time the device is connected to the Blynk.Cloud
 BLYNK_CONNECTED()
 {
@@ -73,13 +75,17 @@ void myTimerEvent()
   // Uptime conversion from second to hour
   int uptimeInHours = ((millis() / 1000) / 60) / 60;
 
-  if (Firebase.setInt(firebaseData, "/FirebaseIOT/uptimeInSeconds", uptimeInSeconds))
+  // Set the update uptime every 10 seconds
+  if (uptimeInSeconds % 10 == 0)
   {
-    Serial.printf("\n+%ds", 1);
-  }
-  else
-  {
-    Serial.println("\nERROR (uptimeInSeconds): " + firebaseData.errorReason());
+    if (Firebase.setInt(firebaseData, "/FirebaseIOT/uptimeInSeconds", uptimeInSeconds))
+    {
+      Serial.printf("\n+%ds", 10);
+    }
+    else
+    {
+      Serial.println("\nERROR (uptimeInSeconds): " + firebaseData.errorReason());
+    }
   }
 
   if (Firebase.setInt(firebaseData, "/FirebaseIOT/uptimeInMinutes", uptimeInMinutes))
@@ -134,7 +140,10 @@ void sensorUpdate()
   if (everyTenMinutes % 600 == 0)
   {
     if (Firebase.pushFloat(firebaseData, "/Logs/humidity", h))
-    {}
+    {
+      count++;
+      Firebase.setInt(firebaseData, "/Count/times", count);
+    }
     else
     {
       Serial.println("\nERROR (Humidity logs): " + firebaseData.errorReason());
@@ -215,5 +224,5 @@ void loop()
   timer.run();
 
   // Optional delay
-  delay(300);
+  // delay(300);
 }
