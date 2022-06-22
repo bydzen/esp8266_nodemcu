@@ -1,15 +1,15 @@
 // Konfigurasi dan Otorisasi ke Blynk
-#define BLYNK_TEMPLATE_ID "TMPLV67Aog2t"
-#define BLYNK_DEVICE_NAME "Quickstart Device"
-#define BLYNK_AUTH_TOKEN "KqkA3qlI4B6CFepUsN7FDZYeApZKr_1Q"
+#define BLYNK_TEMPLATE_ID "XXXXX"
+#define BLYNK_DEVICE_NAME "XXXXX"
+#define BLYNK_AUTH_TOKEN "XXXXX"
 
 // Konfigurasi Host dan Otorisasi ke Firebase
-#define FIREBASE_HOST "forward-tape-353102-default-rtdb.asia-southeast1.firebasedatabase.app/"
-#define FIREBASE_AUTH "NH1trJ4VvOr5vFX1i0Boria6Tw3ptBaofNsQsLyW"
+#define FIREBASE_HOST "XXXXX"
+#define FIREBASE_AUTH "XXXXX"
 
 // Konfigurasi Wi-Fi SSID dan Password
-#define WIFI_SSID "HANSAM 2.4G"
-#define WIFI_PASSWORD "guaganteng2"
+#define WIFI_SSID "XXXXX"
+#define WIFI_PASSWORD "XXXXX"
 
 // Konfigurasi pin DHT11 dan LED
 #define DHTPIN D6
@@ -85,24 +85,6 @@ void sensorUpdate() {
   Serial.printf("\nHum  = %d%%", h);
   Serial.printf("\nTem  = %.1f°C", t);
 
-  // Jika suhu lebih dari 29°C maka LED akan menyala
-//  if (t > 29) {
-//    digitalWrite(redLed, LOW);
-//    // Konsisi dibawah hanya dijalankan satu kali
-//    if (ledStatus == true) {
-//      ledStatus = false;
-//      Blynk.virtualWrite(V1, 1);
-//      Serial.printf("\nBlynk redLed turned on.");
-//    }
-//  } else {
-//    digitalWrite(redLed, HIGH);
-//    // Konsisi dibawah hanya dijalankan satu kali
-//    if (ledStatus == false) {
-//      ledStatus = true;
-//      Blynk.virtualWrite(V1, 0);
-//      Serial.printf("\nBlynk redLed turned off.");
-//    }
-//  }
   // Tidak menggunakan fahrenheit
   float f = dht.readTemperature(false);
   // Kondisi ketika sensor tidak dapat membaca data
@@ -138,7 +120,7 @@ void sensorUpdate() {
 }
 
 // Prosedur untuk menyimpan data ke Firebase
-void saveDataToFirebase() {
+void updateDataToFirebase() {
   Firebase.setFloat(firebaseData, "/dht11/humidity", dht.readHumidity());
   Firebase.setFloat(firebaseData, "/dht11/temperature", dht.readTemperature());
 }
@@ -151,14 +133,14 @@ void automationLedBuzzer() {
   Serial.printf("\nbuzzAuto = %d", buzzAuto.intData());
 
   if (ledAuto.intData() == 1) {
-    digitalWrite(redLed, LOW);
-  } else {
     digitalWrite(redLed, HIGH);
+  } else {
+    digitalWrite(redLed, LOW);
   }
   if (buzzAuto.intData() == 1) {
-    digitalWrite(buzzPin, LOW);
+    tone(buzzPin, 700, 500);
   } else {
-    digitalWrite(buzzPin, HIGH);
+    noTone(buzzPin);
   }
 }
 
@@ -189,8 +171,8 @@ void loop() {
   }
   Serial.printf("\nTime = %02d:%02d:%02d\n", hrsHH, minMM, secSS);
 
-  // Kondisi ketika program telah berjalan 10 menit, maka akan menyimpan data ke Firebase  
-  if (theTime % 10 == 0) { saveDataToFirebase(); }
+  // Kondisi ketika program telah berjalan 10 detik, maka akan memperbarui data ke Firebase  
+  if (theTime % 10 == 0) { updateDataToFirebase(); }
 
   // Otomasi
   automationLedBuzzer();
