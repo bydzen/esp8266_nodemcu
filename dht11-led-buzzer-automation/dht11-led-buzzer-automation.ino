@@ -41,12 +41,9 @@ FirebaseJson json;
 DHT dht(DHTPIN, DHTTYPE);
 
 // Variabel untuk menyimpan data sensor, status, dan waktu
-int h;
-float t;
-float hTemp;
-float tTemp;
-bool dhtStatus = false;
-bool ledStatus = false;
+float h, t;
+float hTemp, tTemp, ledAutoFloat, buzzAutoFloat, ledAutoTemp, buzAutoTemp;
+bool dhtStatus, ledStatus = false;
 int secSS, minMM, hrsHH = 0;
 
 unsigned long theTime;
@@ -119,6 +116,29 @@ void sensorUpdate() {
   tTemp = t;
 }
 
+// Prosedur untuk membaca aktuator LED dan Buzzer
+void actuatorUpdate() {
+  Firebase.getInt(ledAuto, "/dht11/status/led");
+  Firebase.getInt(buzzAuto, "/dht11/status/buzzer");
+
+  // Ubah data FirebaseData ke Float
+  ledAutoFloat = ledAuto.floatData();
+  buzzAutoFloat = buzzAuto.floatData();
+
+  // Hanya jika terjadi perubahan data maka akan dikirimkan ke Blynk
+  if (ledAutoTemp != ledAutoFloat) {
+    Blynk.virtualWrite(V1, ledAutoFloat);
+    Serial.printf("\nBlynk LED updated.");
+  }
+  ledAutoTemp = ledAutoFloat;
+
+  if (buzAutoTemp != buzzAutoFloat) {
+    Blynk.virtualWrite(V2, buzzAutoFloat);
+    Serial.printf("\nBlynk Buzzer updated.");
+  }
+  buzAutoTemp = buzzAutoFloat;
+}
+
 // Prosedur untuk menyimpan data ke Firebase
 void updateDataToFirebase() {
   Firebase.setFloat(firebaseData, "/dht11/humidity", dht.readHumidity());
@@ -149,6 +169,9 @@ void loop() {
   sensorUpdate();
   // Jalankan Blynk  
   Blynk.run();
+
+  // Jalankan aktuator update setiap iterasi
+  actuatorUpdate();
 
   // Untuk membuat penghitung waktu
   theTime = millis() / 1000;
