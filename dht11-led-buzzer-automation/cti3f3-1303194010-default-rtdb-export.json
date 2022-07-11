@@ -1,0 +1,19 @@
+{
+  "dht11": {
+    "automation": {
+      "basedon": "temperature",
+      "humidity": {
+        "status": true
+      },
+      "temperature": {
+        "status": true
+      }
+    },
+    "humidity": 76,
+    "status": {
+      "buzzer": 0,
+      "led": 0
+    },
+    "temperature": 28.3
+  }
+}
